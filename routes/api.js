@@ -7,7 +7,6 @@ const bodyParser = require('body-parser');
 const threadStorage = {
   threads: [],
   nextThreadId: 1,
-  nextId: 1,
   nextReplyId: 1,
 
   // Existing getRecentThreads method remains the same
@@ -81,7 +80,7 @@ module.exports = function (app) {
         // Create new thread object
         const newThread = {
           thread_id: threadStorage.nextThreadId++,
-          _id: threadStorage.nextId++,
+          _id: null,
           board,
           text,
           delete_password: hashedPassword,
@@ -96,6 +95,7 @@ module.exports = function (app) {
 
         // Respond with the created thread (excluding hashed password)
         const responseThread = { ...newThread };
+        responseThread._id = responseThread.thread_id;
         delete responseThread.delete_password;
         delete responseThread.reported;
 
