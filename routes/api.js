@@ -73,7 +73,7 @@ module.exports = function (app) {
 
         // Create new thread object
         const newThread = {
-          _id: threadStorage.nextThreadId++,
+          id: threadStorage.nextThreadId++,
           board,
           text,
           delete_password: hashedPassword,
@@ -100,12 +100,12 @@ module.exports = function (app) {
     // DELETE route to remove a thread
     .delete(async function (req, res) {
       try {
-        const { _id, delete_password } = req.body;
+        const { id, delete_password } = req.body;
         const board = req.params.board;
 
         // Find the thread
         const thread = threadStorage.threads.find(
-          t => t._id === _id && t.board === board
+          t => t.id === id && t.board === board
         );
 
         if (!thread) {
@@ -121,7 +121,7 @@ module.exports = function (app) {
 
         // Remove the thread
         threadStorage.threads = threadStorage.threads.filter(
-          t => t._id !== _id || t.board !== board
+          t => t.id !== id || t.board !== board
         );
 
         res.status(200).json({ message: 'Thread deleted successfully' });
@@ -136,12 +136,12 @@ module.exports = function (app) {
     // POST route to add a reply to a thread
     .post(async function (req, res) {
       try {
-        const { _id, text, delete_password } = req.body;
+        const { id, text, delete_password } = req.body;
         const board = req.params.board;
 
         // Find the thread
         const thread = threadStorage.threads.find(
-          t => t._id === _id && t.board === board
+          t => t.id === id && t.board === board
         );
 
         if (!thread) {
@@ -153,7 +153,7 @@ module.exports = function (app) {
 
         // Create reply object
         const newReply = {
-          reply_id: threadStorage.nextReplyId++,
+          replyid: threadStorage.nextReplyId++,
           text,
           delete_password: hashedPassword,
           created_on: new Date(),
@@ -180,12 +180,12 @@ module.exports = function (app) {
     // DELETE route to remove a reply
     .delete(async function (req, res) {
       try {
-        const { _id, reply_id, delete_password } = req.body;
+        const { id, replyid, delete_password } = req.body;
         const board = req.params.board;
 
         // Find the thread
         const thread = threadStorage.threads.find(
-          t => t._id === _id && t.board === board
+          t => t.id === id && t.board === board
         );
 
         if (!thread) {
@@ -193,7 +193,7 @@ module.exports = function (app) {
         }
 
         // Find the reply
-        const replyIndex = thread.replies.findIndex(r => r.reply_id === reply_id);
+        const replyIndex = thread.replies.findIndex(r => r.replyid === replyid);
 
         if (replyIndex === -1) {
           return res.status(404).json({ error: 'Reply not found' });
@@ -221,12 +221,12 @@ module.exports = function (app) {
   // Reporting Routes
   app.route('/api/threads/:board')
     .put(function (req, res) {
-      const { _id } = req.body;
+      const { id } = req.body;
       const board = req.params.board;
 
       // Find the thread
       const thread = threadStorage.threads.find(
-        t => t._id === _id && t.board === board
+        t => t.id === id && t.board === board
       );
 
       if (!thread) {
@@ -241,12 +241,12 @@ module.exports = function (app) {
 
   app.route('/api/replies/:board')
     .put(function (req, res) {
-      const { _id, reply_id } = req.body;
+      const { id, replyid } = req.body;
       const board = req.params.board;
 
       // Find the thread
       const thread = threadStorage.threads.find(
-        t => t._id === _id && t.board === board
+        t => t.id === id && t.board === board
       );
 
       if (!thread) {
@@ -254,7 +254,7 @@ module.exports = function (app) {
       }
 
       // Find the reply
-      const reply = thread.replies.find(r => r.reply_id === reply_id);
+      const reply = thread.replies.find(r => r.replyid === replyid);
 
       if (!reply) {
         return res.status(404).json({ error: 'Reply not found' });

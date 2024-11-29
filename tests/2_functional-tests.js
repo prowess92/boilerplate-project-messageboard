@@ -36,8 +36,8 @@ suite('Functional Tests', function () {
                     assert.isObject(res.body, 'Response should be an object');
 
                     // Verify specific properties
-                    assert.property(res.body, '_id', 'Response should have _id');
-                    assert.isNumber(res.body._id, '_id should be a number');
+                    assert.property(res.body, 'id', 'Response should have id');
+                    assert.isNumber(res.body.id, 'id should be a number');
 
                     assert.equal(res.body.board, board, 'Board should match the requested board');
                     assert.equal(res.body.text, threadData.text, 'Text should match the submitted text');
@@ -71,13 +71,13 @@ suite('Functional Tests', function () {
                     .post(`/api/threads/${board}`)
                     .send(threadData[0])
                     .end(function (err, res) {
-                        const thread1Id = res.body._id;
+                        const thread1Id = res.body.id;
 
                         // Add replies to first thread
                         chai.request(server)
                             .post(`/api/replies/${board}`)
                             .send({
-                                _id: thread1Id,
+                                id: thread1Id,
                                 text: 'First reply to first thread',
                                 delete_password: 'replypass1'
                             })
@@ -85,7 +85,7 @@ suite('Functional Tests', function () {
                                 chai.request(server)
                                     .post(`/api/replies/${board}`)
                                     .send({
-                                        _id: thread1Id,
+                                        id: thread1Id,
                                         text: 'Second reply to first thread',
                                         delete_password: 'replypass2'
                                     })
@@ -126,7 +126,7 @@ suite('Functional Tests', function () {
 
                         // Verify thread properties
                         res.body.forEach(thread => {
-                            assert.property(thread, '_id', 'Thread should have an ID');
+                            assert.property(thread, 'id', 'Thread should have an ID');
                             assert.property(thread, 'board', 'Thread should have a board');
                             assert.property(thread, 'text', 'Thread should have text');
                             assert.property(thread, 'created_on', 'Thread should have creation time');
@@ -143,7 +143,7 @@ suite('Functional Tests', function () {
 
                             // Verify reply properties
                             thread.replies.forEach(reply => {
-                                assert.property(reply, 'reply_id', 'Reply should have an ID');
+                                assert.property(reply, 'replyid', 'Reply should have an ID');
                                 assert.property(reply, 'text', 'Reply should have text');
                                 assert.property(reply, 'created_on', 'Reply should have creation time');
 
@@ -173,13 +173,13 @@ suite('Functional Tests', function () {
                 .post(`/api/threads/${board}`)
                 .send(threadData)
                 .end(function (err, res) {
-                    const threadId = res.body._id;
+                    const threadId = res.body.id;
 
                     // Then try to delete it
                     chai.request(server)
                         .delete(`/api/threads/${board}`)
                         .send({
-                            _id: threadId,
+                            id: threadId,
                             delete_password: 'correctPassword'
                         })
                         .end(function (err, res) {
@@ -192,7 +192,7 @@ suite('Functional Tests', function () {
                                 .get(`/api/threads/${board}`)
                                 .end(function (err, res) {
                                     assert.isArray(res.body, 'Response should be an array');
-                                    const deletedThread = res.body.find(t => t._id === threadId);
+                                    const deletedThread = res.body.find(t => t.id === threadId);
                                     assert.isUndefined(deletedThread, 'Deleted thread should not exist');
 
                                     done();
@@ -214,13 +214,13 @@ suite('Functional Tests', function () {
                 .post(`/api/threads/${board}`)
                 .send(threadData)
                 .end(function (err, res) {
-                    const threadId = res.body._id;
+                    const threadId = res.body.id;
 
                     // Try to delete with incorrect password
                     chai.request(server)
                         .delete(`/api/threads/${board}`)
                         .send({
-                            _id: threadId,
+                            id: threadId,
                             delete_password: 'wrongPassword'
                         })
                         .end(function (err, res) {
@@ -247,11 +247,11 @@ suite('Functional Tests', function () {
                 .post(`/api/threads/${board}`)
                 .send(threadData)
                 .end(function (err, res) {
-                    const threadId = res.body._id;
+                    const threadId = res.body.id;
 
                     // Add a reply to the thread
                     const replyData = {
-                        _id: threadId,
+                        id: threadId,
                         text: 'This is a test reply',
                         delete_password: 'replyPassword'
                     };
@@ -264,7 +264,7 @@ suite('Functional Tests', function () {
                             assert.equal(res.status, 201, 'Should successfully create reply');
 
                             // Verify reply properties
-                            assert.property(res.body, 'reply_id', 'Reply should have an ID');
+                            assert.property(res.body, 'replyid', 'Reply should have an ID');
                             assert.equal(res.body.text, replyData.text, 'Reply text should match');
                             assert.property(res.body, 'created_on', 'Reply should have creation timestamp');
 
