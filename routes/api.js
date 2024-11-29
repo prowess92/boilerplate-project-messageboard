@@ -80,7 +80,6 @@ module.exports = function (app) {
         // Create new thread object
         const newThread = {
           thread_id: threadStorage.nextThreadId++,
-          _id: null,
           board,
           text,
           delete_password: hashedPassword,
@@ -94,8 +93,7 @@ module.exports = function (app) {
         threadStorage.threads.push(newThread);
 
         // Respond with the created thread (excluding hashed password)
-        const responseThread = { ...newThread };
-        responseThread._id = responseThread.thread_id;
+        const responseThread = { ...newThread, _id: newThread.thread_id };
         delete responseThread.delete_password;
         delete responseThread.reported;
 
