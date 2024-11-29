@@ -1,6 +1,7 @@
 'use strict';
 
 const bcrypt = require('bcrypt');
+const bodyParser = require('body-parser');
 
 // In-memory storage for threads
 const threadStorage = {
@@ -8,29 +9,24 @@ const threadStorage = {
   nextThreadId: 1,
   nextReplyId: 1,
 
-  // Method to get recent threads for a specific board
+  // Existing getRecentThreads method remains the same
   getRecentThreads(board, limit = 10) {
-    // Filter threads by board and sort by most recent
     const boardThreads = this.threads
       .filter(thread => thread.board === board)
       .sort((a, b) => b.bumped_on - a.bumped_on)
       .slice(0, limit);
 
-    // For each thread, get the 3 most recent replies
     return boardThreads.map(thread => {
       const threadCopy = { ...thread };
 
-      // Sort replies by most recent and limit to 3
       threadCopy.replies = thread.replies
         .sort((a, b) => b.created_on - a.created_on)
         .slice(0, 3)
         .map(reply => {
-          // Exclude sensitive information from replies
           const { delete_password, reported, ...safeReply } = reply;
           return safeReply;
         });
 
-      // Exclude sensitive information from the thread
       delete threadCopy.delete_password;
       delete threadCopy.reported;
 
@@ -40,16 +36,23 @@ const threadStorage = {
 };
 
 module.exports = function (app) {
+  // Add body parsing middleware to support both JSON and form data
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
+
+  // Helper function to normalize input
+  const normalizeInput = (req) => {
+    // Prioritize JSON body, fall back to form data
+    return req.body || {};
+  };
+
   // Thread Routes
   app.route('/api/threads/:board')
-    // GET route to retrieve recent threads
+    // GET route remains the same
     .get(function (req, res) {
       try {
         const board = req.params.board;
-
-        // Retrieve recent threads
         const recentThreads = threadStorage.getRecentThreads(board);
-
         res.status(200).json(recentThreads);
       } catch (error) {
         console.error('Error retrieving threads:', error);
@@ -59,7 +62,10 @@ module.exports = function (app) {
     // POST route to create a new thread
     .post(async function (req, res) {
       try {
-        const { board, text, delete_password } = req.body;
+        // Use normalized input
+        const input = normalizeInput(req);
+        const { board } = req.params;
+        const { text, delete_password } = input;
 
         // Validate input
         if (!board || !text || !delete_password) {
@@ -88,6 +94,7 @@ module.exports = function (app) {
 
         // Respond with the created thread (excluding hashed password)
         const responseThread = { ...newThread };
+        responseThread.id = responseThread.thread_id;
         delete responseThread.delete_password;
         delete responseThread.reported;
 
@@ -100,7 +107,9 @@ module.exports = function (app) {
     // DELETE route to remove a thread
     .delete(async function (req, res) {
       try {
-        const { thread_id, delete_password } = req.body;
+        // Use normalized input
+        const input = normalizeInput(req);
+        const { thread_id, delete_password } = input;
         const board = req.params.board;
 
         // Find the thread
@@ -129,6 +138,27 @@ module.exports = function (app) {
         console.error('Error deleting thread:', error);
         res.status(500).json({ error: 'Internal server error' });
       }
+    })
+    // PUT route for reporting a thread
+    .put(function (req, res) {
+      // Use normalized input
+      const input = normalizeInput(req);
+      const { thread_id } = input;
+      const board = req.params.board;
+
+      // Find the thread
+      const thread = threadStorage.threads.find(
+        t => t.thread_id === thread_id && t.board === board
+      );
+
+      if (!thread) {
+        return res.status(404).json({ error: 'Thread not found' });
+      }
+
+      // Mark thread as reported
+      thread.reported = true;
+
+      res.status(200).json({ message: 'Thread reported successfully' });
     });
 
   // Reply Routes
@@ -136,7 +166,9 @@ module.exports = function (app) {
     // POST route to add a reply to a thread
     .post(async function (req, res) {
       try {
-        const { thread_id, text, delete_password } = req.body;
+        // Use normalized input
+        const input = normalizeInput(req);
+        const { thread_id, text, delete_password } = input;
         const board = req.params.board;
 
         // Find the thread
@@ -180,7 +212,9 @@ module.exports = function (app) {
     // DELETE route to remove a reply
     .delete(async function (req, res) {
       try {
-        const { thread_id, reply_id, delete_password } = req.body;
+        // Use normalized input
+        const input = normalizeInput(req);
+        const { thread_id, reply_id, delete_password } = input;
         const board = req.params.board;
 
         // Find the thread
@@ -216,32 +250,12 @@ module.exports = function (app) {
         console.error('Error deleting reply:', error);
         res.status(500).json({ error: 'Internal server error' });
       }
-    });
-
-  // Reporting Routes
-  app.route('/api/threads/:board')
+    })
+    // PUT route for reporting a reply
     .put(function (req, res) {
-      const { thread_id } = req.body;
-      const board = req.params.board;
-
-      // Find the thread
-      const thread = threadStorage.threads.find(
-        t => t.thread_id === thread_id && t.board === board
-      );
-
-      if (!thread) {
-        return res.status(404).json({ error: 'Thread not found' });
-      }
-
-      // Mark thread as reported
-      thread.reported = true;
-
-      res.status(200).json({ message: 'Thread reported successfully' });
-    });
-
-  app.route('/api/replies/:board')
-    .put(function (req, res) {
-      const { thread_id, reply_id } = req.body;
+      // Use normalized input
+      const input = normalizeInput(req);
+      const { thread_id, reply_id } = input;
       const board = req.params.board;
 
       // Find the thread
@@ -268,5 +282,3 @@ module.exports = function (app) {
 };
 
 module.exports.threadStorage = threadStorage;
-
-
