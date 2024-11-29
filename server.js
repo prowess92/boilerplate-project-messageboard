@@ -16,7 +16,8 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'"],
-      scriptSrc: ["'self'"]
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'"]
     }
   }
 }))
