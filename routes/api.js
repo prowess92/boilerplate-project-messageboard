@@ -73,7 +73,7 @@ module.exports = function (app) {
 
         // Create new thread object
         const newThread = {
-          thread_id: threadStorage.nextThreadId++,
+          _id: threadStorage.nextThreadId++,
           board,
           text,
           delete_password: hashedPassword,
@@ -100,12 +100,12 @@ module.exports = function (app) {
     // DELETE route to remove a thread
     .delete(async function (req, res) {
       try {
-        const { thread_id, delete_password } = req.body;
+        const { _id, delete_password } = req.body;
         const board = req.params.board;
 
         // Find the thread
         const thread = threadStorage.threads.find(
-          t => t.thread_id === thread_id && t.board === board
+          t => t._id === _id && t.board === board
         );
 
         if (!thread) {
@@ -121,7 +121,7 @@ module.exports = function (app) {
 
         // Remove the thread
         threadStorage.threads = threadStorage.threads.filter(
-          t => t.thread_id !== thread_id || t.board !== board
+          t => t._id !== _id || t.board !== board
         );
 
         res.status(200).json({ message: 'Thread deleted successfully' });
@@ -136,12 +136,12 @@ module.exports = function (app) {
     // POST route to add a reply to a thread
     .post(async function (req, res) {
       try {
-        const { thread_id, text, delete_password } = req.body;
+        const { _id, text, delete_password } = req.body;
         const board = req.params.board;
 
         // Find the thread
         const thread = threadStorage.threads.find(
-          t => t.thread_id === thread_id && t.board === board
+          t => t._id === _id && t.board === board
         );
 
         if (!thread) {
@@ -180,12 +180,12 @@ module.exports = function (app) {
     // DELETE route to remove a reply
     .delete(async function (req, res) {
       try {
-        const { thread_id, reply_id, delete_password } = req.body;
+        const { _id, reply_id, delete_password } = req.body;
         const board = req.params.board;
 
         // Find the thread
         const thread = threadStorage.threads.find(
-          t => t.thread_id === thread_id && t.board === board
+          t => t._id === _id && t.board === board
         );
 
         if (!thread) {
@@ -221,12 +221,12 @@ module.exports = function (app) {
   // Reporting Routes
   app.route('/api/threads/:board')
     .put(function (req, res) {
-      const { thread_id } = req.body;
+      const { _id } = req.body;
       const board = req.params.board;
 
       // Find the thread
       const thread = threadStorage.threads.find(
-        t => t.thread_id === thread_id && t.board === board
+        t => t._id === _id && t.board === board
       );
 
       if (!thread) {
@@ -241,12 +241,12 @@ module.exports = function (app) {
 
   app.route('/api/replies/:board')
     .put(function (req, res) {
-      const { thread_id, reply_id } = req.body;
+      const { _id, reply_id } = req.body;
       const board = req.params.board;
 
       // Find the thread
       const thread = threadStorage.threads.find(
-        t => t.thread_id === thread_id && t.board === board
+        t => t._id === _id && t.board === board
       );
 
       if (!thread) {
